@@ -1,37 +1,29 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ひとこと掲示板</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 16px; }
-        form { background: #f0f4f8; padding: 16px; border-radius: 8px; }
-        input, textarea { width: 100%; margin-bottom: 8px; padding: 8px; box-sizing: border-box; }
-        button { padding: 8px 24px; background: #0078d4; color: white; border: none; border-radius: 4px; }
-        .message { border-bottom: 1px solid #ddd; padding: 12px 0; }
-        .name { font-weight: bold; color: #0078d4; }
-        .time { color: #888; font-size: 0.9em; margin-left: 8px; }
-    </style>
-</head>
-<body>
-    <h1>ひとこと掲示板!</h1>
+{% extends "base.html" %}
+{% block content %}
+<div class="tabs">
+  <a href="{{ url_for('index', unsolved='1' if unsolved else None) }}" class="{{ 'on' if not current }}">すべて</a>
+  {% for s in subjects %}
+  <a href="{{ url_for('index', subject=s, unsolved='1' if unsolved else None) }}" class="{{ 'on' if s == current }}">{{ s }}</a>
+  {% endfor %}
+</div>
 
-    <form action="/post" method="post">
-        <input type="text" name="name" placeholder="名前（省略可）">
-        <textarea name="message" placeholder="メッセージ" required></textarea>
-        <button type="submit">投稿する</button>
-    </form>
+<form method="get">
+  {% if current %}<input type="hidden" name="subject" value="{{ current }}">{% endif %}
+  <label>
+    <input type="checkbox" name="unsolved" value="1" {{ 'checked' if unsolved }} onchange="this.form.submit()">
+    未解決だけ表示
+  </label>
+  <noscript><button type="submit">絞り込む!!</button></noscript>
+</form>
 
-    <h2>投稿一覧（{{ messages|length }}件）</h2>
-
-    {% for m in messages %}
-    <div class="message">
-        <div><span class="name">{{ m.name }}</span><span class="time">{{ m.posted_at }}</span></div>
-        <div>{{ m.text }}</div>
-    </div>
-    {% else %}
-    <p>まだ投稿がありません</p>
-    {% endfor %}
-</body>
-</html>
+{% for post in posts %}
+<div class="card">
+  <span class="badge">{{ post.subject }}</span>
+  {% if post.solved %}<span class="badge solved">解決済み!!</span>{% else %}<span class="badge unsolved">未解決</span>{% endif %}
+  <a href="{{ url_for('detail', post_id=post.id) }}"><strong>{{ post.title }}</strong></a>
+  <div class="meta">{{ post.name }}・{{ post.created_short }}・回答{{ post.answer_count }}件・わかる{{ post.wakaru }}</div>
+</div>
+{% else %}
+<p>該当する質問はありません。</p>
+{% endfor %}
+{% endblock %}
